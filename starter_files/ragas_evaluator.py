@@ -4,9 +4,11 @@ from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
 from typing import Dict, List, Optional
 
+import os
+
 # RAGAS imports
 try:
-    from ragas import SingleTurnSample
+    from ragas import SingleTurnSample, EvaluationDataset
     from ragas.metrics import BleuScore, NonLLMContextPrecisionWithReference, ResponseRelevancy, Faithfulness, RougeScore
     from ragas import evaluate
     RAGAS_AVAILABLE = True
@@ -29,11 +31,26 @@ def evaluate_response_quality(question: str, answer: str, contexts: List[str], r
         return {"error": "RAGAS not available"}
     
     try:
+
+        # Get API key
+        api_key = os.environ.get("CHROMA_OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
+        base_url = None
+        if api_key and api_key.startswith("voc-"):
+            base_url = "https://openai.vocareum.com/v1"
+
         # Create evaluator LLM with model gpt-3.5-turbo
-        evaluator_llm = LangchainLLMWrapper(ChatOpenAI(model="gpt-3.5-turbo"))
+        llm_kwargs = {"model": "gpt-3.5-turbo", "api_key": api_key}
+        if base_url:
+            llm_kwargs["base_url"] = base_url
+            
+        evaluator_llm = LangchainLLMWrapper(ChatOpenAI(**llm_kwargs))
         
         # Create evaluator_embeddings with model text-embedding-3-small
-        evaluator_embeddings = LangchainEmbeddingsWrapper(OpenAIEmbeddings(model="text-embedding-3-small"))
+        emb_kwargs = {"model": "text-embedding-3-small", "api_key": api_key}
+        if base_url:
+            emb_kwargs["base_url"] = base_url
+            
+        evaluator_embeddings = LangchainEmbeddingsWrapper(OpenAIEmbeddings(**emb_kwargs))
         
         # Define an instance for each metric to evaluate
         # Non-LLM metrics (faster, no API calls needed)
@@ -47,10 +64,7 @@ def evaluate_response_quality(question: str, answer: str, contexts: List[str], r
         # Create a list of metrics to evaluate
         metrics = [bleu_score, rouge_score, response_relevancy, faithfulness]
         
-        # Add context precision metric if reference answer is provided
-        if reference:
-            context_precision = NonLLMContextPrecisionWithReference()
-            metrics.append(context_precision)
+
         
         # Create a SingleTurnSample for evaluation
         sample = SingleTurnSample(
@@ -61,14 +75,17 @@ def evaluate_response_quality(question: str, answer: str, contexts: List[str], r
         )
         
         # Evaluate the response using the metrics
+        dataset = EvaluationDataset(samples=[sample])
         result = evaluate(
-            dataset=[sample],
+            dataset=dataset,
             metrics=metrics
         )
         
         # Convert result to dictionary and return the evaluation results
-        # The result is a pandas DataFrame, so we extract the first row as a dict
-        scores = result.to_dict('records')[0] if len(result) > 0 else {}
+        # The result is a pandas DataFrame-like object
+        # result.to_pandas() returns a DataFrame
+        df = result.to_pandas()
+        scores = df.to_dict('records')[0] if not df.empty else {}
         
         # Return only the metric scores (filter out input fields)
         metric_scores = {

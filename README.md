@@ -325,4 +325,33 @@ When submitting your completed project:
 
 ---
 
+
 **Good luck with your RAG system implementation!** This project will give you hands-on experience with modern AI application development, from data processing to user interface design. Take your time with each component and don't hesitate to experiment with different approaches and parameters.
+
+## Evaluation
+
+To evaluate the RAG system's performance, use the provided batch evaluation script. This script runs a set of test questions against the system and calculates metrics such as Answer Relevancy and Faithfulness using RAGAS.
+
+### Running the Evaluator
+
+1.  Ensure your environment variables are set (especially `OPENAI_API_KEY` or `CHROMA_OPENAI_API_KEY`).
+2.  Run the batch evaluator:
+
+    ```bash
+    python starter_files/batch_evaluator.py --dataset starter_files/test_questions.json
+    ```
+
+    Options:
+    - `--dataset`: Path to the JSON dataset file (default: `starter_files/test_questions.json`).
+    - `--output-dir`: Directory to save results (default: `evaluation_results`).
+    - `--model`: LLM model to use for generation (default: `gpt-3.5-turbo`).
+
+### Evaluation Dataset
+
+The included `starter_files/test_questions.json` contains questions covering various categories relevant to the Apollo 13 mission:
+-   **Overview**: General mission goals.
+-   **Emergency**: Details about the incident.
+-   **Disaster Analysis**: Causes and technical details of the failure.
+-   **Crew**: Information about the astronauts.
+-   **Technical**: Specific systems and solutions (e.g., CO2 removal).
+-   **Timeline**: Key events and dates.

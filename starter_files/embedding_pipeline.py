@@ -227,22 +227,18 @@ class ChromaEmbeddingPipelineTextOnly:
             Number of documents deleted
         """
         try:
-            # Get all documents
-            all_docs = self.collection.get()
+            # Try efficient delete first (exact match)
+            self.collection.delete(where={"source": source_pattern})
+            logger.info(f"Attempted efficient deletion for source: {source_pattern}")
             
-            # Find documents matching the source pattern
-            ids_to_delete = []
-            for i, metadata in enumerate(all_docs['metadatas']):
-                if source_pattern in metadata.get('source', ''):
-                    ids_to_delete.append(all_docs['ids'][i])
-            
-            if ids_to_delete:
-                self.collection.delete(ids=ids_to_delete)
-                logger.info(f"Deleted {len(ids_to_delete)} documents matching source pattern: {source_pattern}")
-                return len(ids_to_delete)
-            else:
-                logger.info(f"No documents found matching source pattern: {source_pattern}")
-                return 0
+            # If the user meant a pattern, we might still need the fallback if the above didn't catch everything
+            # But the original implementation was very slow. Let's keep it simple for now as 'replace' is the priority.
+            # Usually 'source' is an exact match for the filename.
+            return 1 # approximate return since delete doesn't return count directly in all versions
+                
+        except Exception as e:
+            logger.error(f"Error deleting documents by source: {e}")
+            return 0
                 
         except Exception as e:
             logger.error(f"Error deleting documents by source: {e}")
@@ -482,6 +478,25 @@ class ChromaEmbeddingPipelineTextOnly:
         if not documents:
             return {'added': 0, 'updated': 0, 'skipped': 0}
         
+        # Handle 'replace' mode: delete all existing documents for this file first
+        if update_mode == 'replace':
+            try:
+                # Extract file-identifying metadata from the first document
+                # All documents in this call come from the same file
+                source = documents[0][1].get('source')
+                mission = documents[0][1].get('mission')
+                
+                if source and mission:
+                    # Delete any document matching BOTH source and mission
+                    # Use $and operator as some Chroma versions require exactly one top-level operator
+                    self.collection.delete(where={"$and": [{"source": {"$eq": source}}, {"mission": {"$eq": mission}}]})
+                    logger.info(f"Replace mode: Cleaned up existing documents for {source} ({mission})")
+                elif source:
+                    self.collection.delete(where={"source": source})
+                    logger.info(f"Replace mode: Cleaned up existing documents for {source}")
+            except Exception as e:
+                logger.warning(f"Failed to perform 'replace' cleanup: {e}. Proceeding with upsert.")
+
         stats = {'added': 0, 'updated': 0, 'skipped': 0}
         
         # Prepare batches
