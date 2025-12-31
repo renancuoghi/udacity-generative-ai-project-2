@@ -1,0 +1,32 @@
+[
+    {
+        "category": "Overview",
+        "question": "What was the primary mission objective of Apollo 13 before the accident?",
+        "reference": "The primary mission objective of Apollo 13 was to perform a manned lunar landing in the Fra Mauro Highlands."
+    },
+    {
+        "category": "Emergency",
+        "question": "What famous phrase did Jim Lovell say to Mission Control after the explosion?",
+        "reference": "Jim Lovell said, 'Houston, we've had a problem.' (often misquoted as 'Houston, we have a problem')."
+    },
+    {
+        "category": "Disaster Analysis",
+        "question": "What caused the explosion on Apollo 13?",
+        "reference": "The explosion was caused by a short circuit in an oxygen tank (Oxygen Tank No. 2) in the Service Module, which ignited wire insulation and caused the tank to rupture."
+    },
+    {
+        "category": "Crew",
+        "question": "Who were the three astronauts on the Apollo 13 mission?",
+        "reference": "The crew members of Apollo 13 were James A. Lovell Jr. (Commander), John L. Swigert Jr. (Command Module Pilot), and Fred W. Haise Jr. (Lunar Module Pilot)."
+    },
+    {
+        "category": "Technical",
+        "question": "How did the crew remove carbon dioxide from the Lunar Module after the Command Module was shut down?",
+        "reference": "The crew built a makeshift adapter (The 'mailbox') using plastic bags, cardboard, and tape to fit square Command Module Lithium Hydroxide (LiOH) canisters into the round openings of the Lunar Module's environmental system."
+    },
+    {
+        "category": "Timeline",
+        "question": "When did Apollo 13 launch and when did it splash down?",
+        "reference": "Apollo 13 launched on April 11, 1970, and splashed down on April 17, 1970."
+    }
+]
